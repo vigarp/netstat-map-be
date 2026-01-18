@@ -6,7 +6,25 @@ const cors = require('cors');
 const countriesList = require('./countries.json');
 
 const app = express();
-app.use(cors({ origin: ['http://localhost:5173', 'http://127.0.0.1:8080', 'http://localhost:4173'] }));
+
+const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true)
+    }
+
+    return callback(new Error('CORS not allowed'), false);
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+ }))
+
+ app.options('*', cors());
 
 let lastFetch = null;
 let cache = { data: null, timestamp: null, ttl: 10 * 60 * 1000 }; // 10 minutes in ms
